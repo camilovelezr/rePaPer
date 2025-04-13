@@ -1,0 +1,76 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
+    theme: {
+        extend: {
+            colors: {
+                'primary': '#4f46e5',
+                'primary-light': '#6366f1',
+                'primary-dark': '#4338ca',
+                'secondary': '#ec4899',
+                'secondary-light': '#f9a8d4',
+                'secondary-dark': '#db2777',
+                'neutral-50': '#fafafa',
+                'neutral-100': '#f5f5f5',
+                'neutral-200': '#e5e5e5',
+                'neutral-300': '#d4d4d4',
+                'neutral-400': '#a3a3a3',
+                'neutral-500': '#737373',
+                'neutral-600': '#525252',
+                'neutral-700': '#404040',
+                'neutral-800': '#262626',
+                'neutral-900': '#171717',
+                'purple-50': '#faf5ff',
+                'purple-100': '#f3e8ff',
+                'purple-200': '#e9d5ff',
+                'purple-300': '#d8b4fe',
+                'purple-400': '#c084fc',
+                'purple-500': '#a855f7',
+                'purple-600': '#9333ea',
+                'purple-700': '#7e22ce',
+                'purple-800': '#6b21a8',
+                'purple-900': '#581c87',
+                'purple-950': '#3b0764',
+            },
+            boxShadow: {
+                'elegant': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                'soft': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            },
+            borderRadius: {
+                'xl': '1rem',
+                '2xl': '1.5rem',
+                '3xl': '2rem',
+            },
+            ringWidth: {
+                DEFAULT: '2px',
+                '0': '0',
+                '1': '1px',
+                '2': '2px',
+                '4': '4px',
+                '8': '8px',
+            },
+            ringOffsetWidth: {
+                DEFAULT: '2px',
+                '0': '0',
+                '1': '1px',
+                '2': '2px',
+                '4': '4px',
+                '8': '8px',
+            },
+            ringColor: {
+                DEFAULT: '#6366f1',
+                'indigo': '#6366f1',
+            },
+            ringOffsetColor: {
+                DEFAULT: '#ffffff',
+                'gray': {
+                    800: '#1f2937',
+                },
+            },
+        },
+    },
+    plugins: [],
+} 
