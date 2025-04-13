@@ -26,8 +26,8 @@ We've picked the crème de la crème:
 ### 🐳 With Docker (recommended)
 
 ```bash
-# Clone this bad boy
-git clone https://github.com/yourusername/rePaPer.git
+# Clone this
+git clone https://github.com/camilovelezr/rePaPer.git
 
 # Fire it up
 docker-compose up --build
@@ -68,7 +68,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-## �� Production Build
+## 📝 Production Build
 
 ```bash
 # Build the thing
@@ -100,4 +100,4 @@ Because reading entire documents is so 2023. Let AI do the heavy lifting while y
 
 ---
 
-Made with ☕️ and questionable life choices.
+Made with ☕️ and the ghost of "it works on my machine".
