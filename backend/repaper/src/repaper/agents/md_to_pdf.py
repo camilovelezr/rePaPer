@@ -39,6 +39,11 @@ def convert_markdown_to_pdf(
         # It's already markdown content
         md_content = input_markdown
 
+    if title:
+        md_content = f"# {title}\n\n{md_content}"
+    else:
+        md_content = f"# Summary\n\n{md_content}"
+
     # CSS styling
     css = """
     /* Global styles */

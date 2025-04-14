@@ -4,6 +4,7 @@ from PyPDF2 import PdfReader, PdfWriter
 from pydantic import Field, BaseModel
 
 from pydantic_ai import Agent, BinaryContent, RunContext
+from pydantic_ai.settings import ModelSettings
 
 # import logfire
 from io import BytesIO
@@ -173,6 +174,8 @@ Considerations:
 - If you need to be specific, you are allowed to be so.
 - The goal of the summary is not to be short, but to be comprehensive.
 - Include tables (as markdown tables) if necessary.
+- NEVER, AND I MEAN NEVER, include something that is NOT IN THE DOCUMENT.
+- I REPEAT: DO NOT MAKE UP ANYTHING, DO NOT USE ANYTHING FROM YOUR KNOWLEDGE THAT IS NOT IN THE DOCUMENT.
 
 Do not start your response with ```markdown, just output the markdown.
 Do not start your response with something like "Here is the summary of the section <section title>".
@@ -191,6 +194,9 @@ mini_summarizer = Agent(
     result_type=str,
     result_tool_description="A markdown string with the summary",
     instrument=True,
+    model_settings=ModelSettings(
+        temperature=0.25,
+    ),
 )
 
 

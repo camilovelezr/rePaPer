@@ -91,11 +91,21 @@ const ActionButtons = ({ markdown, title }: { markdown: string, title: string })
 
       if (!response.ok) throw new Error('Failed to generate PDF');
 
+      // Get filename from Content-Disposition header if present
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = title.replace(/\s+/g, '_') + '.pdf';
+      if (contentDisposition) {
+        const matches = /filename="([^"]*)"/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = matches[1];
+        }
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'document.pdf';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -108,25 +118,23 @@ const ActionButtons = ({ markdown, title }: { markdown: string, title: string })
   return (
     <div className="flex items-center space-x-4">
       <button
-        onClick={handleCopy}
-        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 
-        border border-gray-200 dark:border-gray-700 transition-all duration-200 text-base font-medium text-gray-900 dark:text-white"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-        <span>Copy to Clipboard</span>
-      </button>
-
-      <button
         onClick={handleDownloadPDF}
-        className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 
-        transition-all duration-200 text-base font-medium text-white"
+        className="flex items-center"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
         <span>Download PDF</span>
+      </button>
+
+      <button
+        onClick={handleCopy}
+        className="flex items-center"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <span>Copy to Clipboard</span>
       </button>
     </div>
   );
@@ -444,6 +452,16 @@ function App() {
     setFile(null);
   };
 
+  // Add this function near other handlers
+  const handleTextareaInput = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    // Reset height to auto to properly calculate new height
+    textarea.style.height = 'auto';
+    // Set new height based on scrollHeight
+    textarea.style.height = `${textarea.scrollHeight}px`;
+    setInstructions(textarea.value);
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center selection:bg-purple-100 dark:selection:bg-purple-900/30">
       {/* Error Toast */}
@@ -467,28 +485,6 @@ function App() {
       )}
 
       <div className="fixed top-6 right-6 flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Preview</span>
-          <button
-            onClick={togglePreviewMode}
-            className={`
-              relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
-              transition-colors duration-200 ease-in-out focus:outline-none bg-opacity-90
-              ${previewMode ? 'bg-purple-600' : 'bg-gray-200 dark:bg-gray-700'}
-            `}
-            role="switch"
-            aria-checked={previewMode}
-          >
-            <span
-              className={`
-                pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm
-                transition duration-200 ease-in-out
-                ${previewMode ? 'translate-x-5' : 'translate-x-0'}
-              `}
-            />
-          </button>
-        </div>
-
         <button
           onClick={toggleDarkMode}
           className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
@@ -499,7 +495,7 @@ function App() {
         </button>
       </div>
 
-      <div className="w-full max-w-5xl mx-auto px-6 py-16">
+      <div className="w-full max-w-5xl mx-auto px-6 py-16 pb-24">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-500 tracking-tight">
             rePaPer
@@ -547,9 +543,9 @@ function App() {
 
                 {isDropdownOpen && models.length > 0 && (
                   <div className="
-                    absolute z-10 w-full mt-0.5 bg-white dark:bg-gray-900 
-                    border border-gray-200 dark:border-gray-800
-                    rounded-xl shadow-lg overflow-hidden
+                    absolute z-10 w-full mt-0.5 bg-white dark:bg-gray-800/95
+                    border border-gray-200 dark:border-gray-700
+                    rounded-xl shadow-xl backdrop-blur-sm
                     transform opacity-100 scale-100 transition-all duration-100 ease-out
                   ">
                     <div className="max-h-[600px] overflow-auto">
@@ -565,10 +561,10 @@ function App() {
                             flex items-center
                             ${selectedModel === model
                               ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                              : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                              : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/90'
                             }
                             text-lg transition-colors cursor-pointer
-                            border-b border-gray-100 dark:border-gray-800 last:border-0
+                            border-b border-gray-100 dark:border-gray-700 last:border-0
                           `}
                         >
                           <div className="dropdown-text-padding">
@@ -589,12 +585,13 @@ function App() {
               </h2>
               <textarea
                 value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
+                onChange={handleTextareaInput}
                 placeholder="What do you want to do with this PDF?"
-                className="flex-1 min-h-[350px] p-8 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 
+                className="flex-1 min-h-[200px] p-8 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 
                 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:focus:border-purple-500 
-                transition-shadow resize-none text-gray-900 dark:text-white text-lg leading-relaxed
+                transition-shadow resize-none text-gray-900 dark:text-white text-lg leading-relaxed overflow-hidden
                 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                style={{ height: 'auto' }}
               />
             </div>
           </div>
@@ -666,50 +663,146 @@ function App() {
           </div>
         </div>
 
-        <button
-          onClick={handleButtonClick}
-          disabled={!file || !selectedModel || isLoading}
-          className={`
-            w-full mt-24 px-6 h-16 rounded-xl text-white font-medium text-lg
-            transition-all duration-200
-            ${isLoading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 focus:ring-4 focus:ring-purple-500/20 active:scale-[0.98] cursor-pointer'}
-          `}
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white opacity-75" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </span>
-          ) : (
-            'rePaPer'
-          )}
-        </button>
+        <div className="mt-24 flex flex-col items-center gap-8 mb-24">
+          {/* Mode Selector */}
+          <div className="relative w-full max-w-[280px] h-12">
+            <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-full"></div>
+
+            {/* Sliding Background */}
+            <div
+              className={`
+                absolute inset-y-1 w-[50%] rounded-full
+                transform transition-all duration-500 ease-out-expo
+                ${previewMode ? 'left-1' : 'left-[calc(50%-1px)]'}
+                bg-gradient-to-r from-purple-600 to-purple-500
+                shadow-[0_2px_8px_-1px_rgba(168,85,247,0.6)] dark:shadow-[0_0_12px_rgba(168,85,247,0.35)]
+              `}
+            />
+
+            {/* Buttons Container */}
+            <div className="relative h-full flex">
+              <button
+                onClick={() => !previewMode && togglePreviewMode()}
+                className="flex-1 group relative focus:outline-none mode-selector-btn"
+              >
+                <div className={`
+                  flex items-center justify-center gap-2 h-full
+                  transition-all duration-300 rounded-full
+                  ${previewMode
+                    ? 'text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }
+                `}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                  <span className={`text-sm font-medium transition-all duration-300 ${previewMode ? 'opacity-100' : 'opacity-80'}`}>
+                    Live Preview
+                  </span>
+                </div>
+
+                {/* Live Preview tooltip */}
+                <div className="mode-tooltip">
+                  <div className="mode-tooltip-content">
+                    Watch the transformation happen live
+                    <div className="mode-tooltip-arrow"></div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => previewMode && togglePreviewMode()}
+                className="flex-1 group relative focus:outline-none mode-selector-btn"
+              >
+                <div className={`
+                  flex items-center justify-center gap-2 h-full
+                  transition-all duration-300 rounded-full
+                  ${!previewMode
+                    ? 'text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }
+                `}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  <span className={`text-sm font-medium transition-all duration-300 ${!previewMode ? 'opacity-100' : 'opacity-80'}`}>
+                    Quick PDF
+                  </span>
+                </div>
+
+                {/* Quick PDF tooltip */}
+                <div className="mode-tooltip">
+                  <div className="mode-tooltip-content">
+                    Skip preview, get PDF instantly
+                    <div className="mode-tooltip-arrow"></div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Action Button */}
+          <button
+            onClick={handleButtonClick}
+            disabled={!file || !selectedModel || isLoading}
+            className={`
+              w-full px-6 h-16 rounded-xl text-white font-medium text-xl
+              transition-all duration-200
+              ${isLoading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 focus:ring-4 focus:ring-purple-500/20 active:scale-[0.98] cursor-pointer'}
+            `}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white opacity-75" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              'rePaPer'
+            )}
+          </button>
+        </div>
 
         {/* Progress updates */}
         {progress && (
           <div className="mt-24 space-y-6">
-            <ProgressMessage message={progress.message} />
-            {progress.totalSections > 0 && (
-              <div className="mt-6 bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6">
-                <div className="flex items-center justify-between text-base mb-4">
-                  <span className="text-gray-700 dark:text-gray-300">Processing sections...</span>
-                  <span className="text-purple-600 dark:text-purple-400 font-medium text-lg">
-                    {progress.currentSection}/{progress.totalSections}
-                  </span>
+            <div className="progress-container">
+              <div className="progress-header">
+                <div className="progress-icon">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
                 </div>
-                <div className="w-full bg-white dark:bg-gray-800 rounded-full h-3">
-                  <div
-                    className="bg-purple-600 h-3 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${(progress.currentSection / progress.totalSections) * 100}%` }}
-                  />
-                </div>
+                <p className="progress-message">{progress.message}</p>
               </div>
-            )}
+
+              {progress.totalSections > 0 && (
+                <>
+                  <div className="progress-bar-container">
+                    <div
+                      className="progress-bar"
+                      style={{ width: `${(progress.currentSection / progress.totalSections) * 100}%` }}
+                    />
+                  </div>
+                  <div className="progress-stats">
+                    <span>Processing sections...</span>
+                    <span className="section-count">
+                      {progress.currentSection}/{progress.totalSections}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 

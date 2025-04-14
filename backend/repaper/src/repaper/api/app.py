@@ -180,7 +180,7 @@ async def markdown_to_pdf(request: MarkdownToPdfRequest):
             headers={"Content-Disposition": f'attachment; filename="document.pdf"'},
         )
     except Exception as e:
-        # print(f"PDF generation error: {str(e)}")
+        print(f"PDF generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -1,0 +1,681 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles */
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Minimal scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* Subtle file drop animation */
+@keyframes dropPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.02);
+    opacity: 0.95;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-drop {
+  animation: dropPulse 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Upload box hover effect */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.group:hover .float {
+  animation: float 2s ease-in-out infinite;
+}
+
+/* Selection color */
+::selection {
+  background-color: #f3e8ff;
+}
+
+.dark ::selection {
+  background-color: rgba(88, 28, 135, 0.3);
+}
+
+/* Dark mode transition */
+.dark-mode-transition {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Custom animations */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Custom styles */
+.bg-gradient-to-br {
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Dark mode text color fixes for markdown preview */
+.dark .prose {
+  color: #E5E7EB !important;
+}
+
+.dark .prose strong {
+  color: #F3F4F6 !important;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: #F9FAFB !important;
+}
+
+.dark .prose code {
+  color: #E5E7EB !important;
+  background: rgba(31, 41, 55, 0.5) !important;
+}
+
+.dark .prose a {
+  color: #A78BFA !important;
+}
+
+.dark .prose blockquote {
+  color: #D1D5DB !important;
+  border-color: #4B5563 !important;
+}
+
+.dark .prose ul,
+.dark .prose ol {
+  color: #E5E7EB !important;
+}
+
+.dark .prose hr {
+  border-color: #374151 !important;
+}
+
+/* File upload area animations */
+.file-upload-area {
+  transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+  transform: translateY(-2px);
+}
+
+/* Button animations */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Override for mode selector buttons */
+.mode-selector-btn:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Elegant scrollbar for code blocks */
+pre::-webkit-scrollbar {
+  height: 4px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.5);
+  border-radius: 9999px;
+}
+
+/* Backdrop blur effect */
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* File drop area modernization */
+.file-drop-area {
+  border: 2px dashed rgba(99, 102, 241, 0.2);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 150px !important;
+}
+
+.dark .file-drop-area {
+  background: rgba(17, 24, 39, 0.3);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.file-drop-area:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Repaper button enhancement */
+.repaper-button {
+  background: linear-gradient(135deg, #4f46e5, #ec4899);
+  color: white;
+  border: none;
+  border-radius: 1rem;
+  font-weight: bold;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.repaper-button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.25);
+}
+
+.repaper-button:disabled {
+  background: linear-gradient(135deg, #a5a5a5, #d1d1d1);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Focus state improvements */
+button:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  ring-width: 2px;
+  ring-offset-width: 2px;
+  ring-color: #6366f1;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .text-4xl {
+    font-size: 2.5rem;
+  }
+}
+
+/* Dark mode enhancements */
+.dark .bg-white {
+  background-color: rgba(17, 24, 39, 0.7);
+}
+
+.dark textarea {
+  background-color: rgba(17, 24, 39, 0.5);
+}
+
+textarea {
+  padding: 10px !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out forwards;
+}
+
+/* Force padding for dropdown text */
+.dropdown-text-padding {
+  padding-left: 1rem !important;
+}
+
+/* Force spacing for input sections */
+.input-sections {
+  margin-bottom: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  gap: 1.5rem !important;
+}
+
+.dark .input-sections {
+  border-color: rgba(107, 114, 128, 0.2);
+}
+
+/* Clean button styles */
+button {
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+/* Remove old toggle switch styles */
+button[role="switch"] {
+  outline: none !important;
+}
+
+button[role="switch"]:focus-visible {
+  outline: 2px solid #6366f1 !important;
+  outline-offset: 2px !important;
+}
+
+/* Action buttons styling revamp */
+.flex.items-center.space-x-4 button {
+  padding: 0.75rem 1.25rem !important;
+  border-radius: 12px !important;
+  font-size: 0.925rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.625rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(229, 231, 235, 0.5) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Container spacing */
+.flex.items-center.space-x-4 {
+  display: flex !important;
+  gap: 1rem !important;
+  padding: 1.5rem 0 !important;
+  margin-top: 2rem !important;
+  width: 100% !important;
+}
+
+/* Copy button specific styles */
+.flex.items-center.space-x-4 button:last-child {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #4B5563 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  flex: 0 0 auto !important;
+  /* Don't grow, stay compact */
+  min-width: 180px !important;
+}
+
+/* Download button specific styles */
+.flex.items-center.space-x-4 button:first-child {
+  background: linear-gradient(135deg, #8B5CF6, #6366F1) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+  flex: 1 !important;
+  /* Take up remaining space */
+  justify-content: center !important;
+}
+
+/* Dark mode styles */
+.dark .flex.items-center.space-x-4 button:last-child {
+  background: rgba(31, 41, 55, 0.75) !important;
+  color: #E5E7EB !important;
+  border-color: rgba(75, 85, 99, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .flex.items-center.space-x-4 button:first-child {
+  background: linear-gradient(135deg, #7C3AED, #4F46E5) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Hover states */
+.flex.items-center.space-x-4 button:last-child:hover {
+  transform: translateY(-2px) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+}
+
+.flex.items-center.space-x-4 button:first-child:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+  filter: brightness(1.05) !important;
+}
+
+.dark .flex.items-center.space-x-4 button:last-child:hover {
+  background: rgba(31, 41, 55, 0.9) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .flex.items-center.space-x-4 button:first-child:hover {
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Icon styling */
+.flex.items-center.space-x-4 button svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2 !important;
+}
+
+/* Add proper spacing for the bottom container */
+.w-full.max-w-5xl.mx-auto.px-6.py-16.pb-24 {
+  padding-bottom: 6rem !important;
+}
+
+/* Toggle switch animations */
+.toggle-switch {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.toggle-switch-thumb {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Custom height for instructions textarea */
+textarea.flex-1.min-h-\[350px\] {
+  min-height: 200px !important;
+}
+
+/* Theme toggle button enhancement */
+button[aria-label="Toggle dark mode"] {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 16px !important;
+  position: fixed !important;
+  top: 24px !important;
+  right: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(229, 231, 235, 0.5) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark button[aria-label="Toggle dark mode"] {
+  background: rgba(31, 41, 55, 0.9) !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+button[aria-label="Toggle dark mode"]:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark button[aria-label="Toggle dark mode"]:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+button[aria-label="Toggle dark mode"] svg {
+  width: 24px !important;
+  height: 24px !important;
+  stroke-width: 1.75 !important;
+}
+
+/* Enhance the sun/moon icons */
+button[aria-label="Toggle dark mode"] svg path {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.dark button[aria-label="Toggle dark mode"] {
+  color: #a78bfa !important;
+}
+
+button[aria-label="Toggle dark mode"] {
+  color: #fbbf24 !important;
+}
+
+/* Tooltip styling */
+.mode-tooltip {
+  position: absolute !important;
+  top: -3rem !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mode-tooltip-content {
+  background: rgba(17, 24, 39, 0.95) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: white !important;
+  padding: 0.75rem 1.25rem !important;
+  border-radius: 12px !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(0.5rem) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mode-tooltip-arrow {
+  position: absolute !important;
+  bottom: -0.375rem !important;
+  left: 50% !important;
+  transform: translateX(-50%) rotate(45deg) !important;
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+  background: rgba(17, 24, 39, 0.95) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 0.125rem !important;
+}
+
+/* Hover states for tooltip */
+.group:hover .mode-tooltip {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(-0.25rem) !important;
+}
+
+.group:hover .mode-tooltip .mode-tooltip-content {
+  transform: translateY(0) !important;
+}
+
+/* Dark mode adjustments */
+.dark .mode-tooltip-content,
+.dark .mode-tooltip-arrow {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: rgba(17, 24, 39, 0.95) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Progress section styling */
+.progress-container {
+  background: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(229, 231, 235, 0.2) !important;
+  border-radius: 24px !important;
+  padding: 2rem !important;
+  margin: 2rem 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.3s ease-in-out !important;
+}
+
+.dark .progress-container {
+  background: rgba(17, 24, 39, 0.4) !important;
+  border-color: rgba(75, 85, 99, 0.2) !important;
+}
+
+.progress-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.progress-icon {
+  background: linear-gradient(135deg, #8B5CF6, #6366F1) !important;
+  padding: 0.75rem !important;
+  border-radius: 16px !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+}
+
+.dark .progress-icon {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.progress-message {
+  font-size: 1.125rem !important;
+  font-weight: 500 !important;
+  color: #1F2937 !important;
+  margin: 0 !important;
+}
+
+.dark .progress-message {
+  color: #F3F4F6 !important;
+}
+
+.progress-bar-container {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 12px !important;
+  height: 8px !important;
+  overflow: hidden !important;
+  margin-top: 1rem !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .progress-bar-container {
+  background: rgba(31, 41, 55, 0.4) !important;
+}
+
+.progress-bar {
+  height: 100% !important;
+  background: linear-gradient(135deg, #8B5CF6, #6366F1) !important;
+  border-radius: 12px !important;
+  transition: width 0.3s ease-in-out !important;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2) !important;
+}
+
+.progress-stats {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: 0.75rem !important;
+  font-size: 0.875rem !important;
+  color: #6B7280 !important;
+}
+
+.dark .progress-stats {
+  color: #9CA3AF !important;
+}
+
+.section-count {
+  font-weight: 600 !important;
+  color: #4B5563 !important;
+}
+
+.dark .section-count {
+  color: #E5E7EB !important;
+}
