@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "anthropic>=0.49.0",
     "fastapi>=0.115.11",
+    "logfire>=3.14.0",
     "markdown>=3.7",
     "markdown-pdf>=1.5",
     "pydantic-ai>=0.0.40",

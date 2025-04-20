@@ -1,17 +1,10 @@
-from pathlib import Path
 from pydantic import BaseModel, Field
 from PyPDF2 import PdfReader, PdfWriter
-from pydantic import Field, BaseModel
 
 from pydantic_ai import Agent, BinaryContent, RunContext
 from pydantic_ai.settings import ModelSettings
 
-# import logfire
 from io import BytesIO
-
-# logfire.configure()
-# logfire.instrument_anthropic()
-# logfire.instrument_pydantic_ai()
 
 LLM_MODEL_KEYS = [
     "Gemini 2.5 Pro",
@@ -123,7 +116,6 @@ TO BE CLEAR: if user specifies an output language, you ONLY use that information
 to determine the value of 'language', BUT your instructions and everything else MUST BE IN ENGLISH.
 """
 
-
 orchestrator = Agent(
     system_prompt=orchestrator_prompt,
     result_type=Sections,
@@ -140,14 +132,6 @@ async def run_orchestrator(pdf_bytes: bytes, instructions: str, model: str):
         model=LLM_MODELS[model],
     )
     return res
-
-
-# res = summarizer.run_sync(
-#     [
-#         "I am a resident in pediatrics, and I need to summarize this document to study, output in spanish",
-#         BinaryContent(data=pdf_test.read_bytes(), media_type="application/pdf"),
-#     ]
-# )
 
 
 mini_summarizer_prompt = """
@@ -219,29 +203,3 @@ async def system_prompt(ctx: RunContext[MiniSummarizerDeps]) -> str:
     Output your response in {ctx.deps.language}. VERY IMPORTANT.
     </language>
     """
-
-
-# async def run_mini_summarizer(
-#     pdf_bytes: bytes, section: Section, background: str, language: str
-# ):
-#     res = await mini_summarizer.run(
-#         [
-#             BinaryContent(data=pdf_bytes, media_type="application/pdf"),
-#         ],
-#     )
-
-
-# for section in res.data.sections:
-#     summ = mini_summarizer.run_sync(
-#         [
-#             BinaryContent(
-#                 data=extract_pdf_pages(pdf_test, section.pages),
-#                 media_type="application/pdf",
-#             )
-#         ],
-#         deps=MiniSummarizerDeps(
-#             section=section, background=res.data.background, language=res.data.language
-#         ),
-#     )
-#     s += summ.data
-#     s += "\n\n"
