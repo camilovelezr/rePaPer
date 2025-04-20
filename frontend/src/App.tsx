@@ -23,13 +23,6 @@ interface ErrorToast {
   visible: boolean;
 }
 
-interface CodeProps extends React.HTMLAttributes<HTMLElement> {
-  node?: any;
-  inline?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}
-
 // Sun icon component
 const SunIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -52,19 +45,6 @@ const ChevronDownIcon = () => (
 )
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
-
-const ProgressMessage = ({ message }: { message: string }) => (
-  <div className="flex items-center space-x-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 animate-fade-in">
-    <div className="flex-shrink-0">
-      <div className="animate-pulse">
-        <svg className="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-    </div>
-    <p className="text-gray-700 dark:text-gray-300 text-lg">{message}</p>
-  </div>
-);
 
 const ActionButtons = ({ markdown, title }: { markdown: string, title: string }) => {
   const handleCopy = async () => {
