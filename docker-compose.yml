@@ -21,6 +21,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CORS_ORIGINS=http://localhost:3000
+    env_file:
+      - ./backend/repaper/.env
 
 networks:
   default:
