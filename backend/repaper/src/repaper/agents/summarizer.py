@@ -1,23 +1,24 @@
+from io import BytesIO
 from pydantic import BaseModel, Field
 from PyPDF2 import PdfReader, PdfWriter
 
+import logfire
 from pydantic_ai import Agent, BinaryContent, RunContext
 from pydantic_ai.settings import ModelSettings
 
-from io import BytesIO
+logfire.configure()
+logfire.instrument_pydantic_ai()
 
-LLM_MODEL_KEYS = [
-    "Gemini 2.5 Pro",
-    "Claude 3.7 Sonnet",
-    "Claude 3.5 Haiku",
-    "Claude 3.5 Sonnet",
-]
 LLM_MODELS = {
     "Gemini 2.5 Pro": "google-gla:gemini-2.5-pro-exp-03-25",
+    "Gemini 2.5 Flash": "google-gla:gemini-2.5-flash-preview-04-17",
+    "Gemini 2.5 Pro $": "google-gla:gemini-2.5-pro-preview-03-25",
     "Claude 3.7 Sonnet": "anthropic:claude-3-7-sonnet-latest",
     "Claude 3.5 Haiku": "anthropic:claude-3-5-haiku-latest",
     "Claude 3.5 Sonnet": "anthropic:claude-3-5-sonnet-latest",
 }
+
+LLM_MODEL_KEYS = list(LLM_MODELS.keys())
 
 
 def extract_pdf_pages(pdf_path, page_numbers):
@@ -118,12 +119,13 @@ to determine the value of 'language', BUT your instructions and everything else 
 
 orchestrator = Agent(
     system_prompt=orchestrator_prompt,
-    result_type=Sections,
+    output_type=Sections,
     instrument=True,
 )
 
 
 async def run_orchestrator(pdf_bytes: bytes, instructions: str, model: str):
+    logfire.debug(f"Running orchestrator with model: {model}")
     res = await orchestrator.run(
         [
             instructions,
@@ -175,8 +177,7 @@ class MiniSummarizerDeps(BaseModel):
 mini_summarizer = Agent(
     system_prompt=mini_summarizer_prompt,
     deps_type=MiniSummarizerDeps,
-    result_type=str,
-    result_tool_description="A markdown string with the summary",
+    output_type=str,
     instrument=True,
     model_settings=ModelSettings(
         temperature=0.25,
