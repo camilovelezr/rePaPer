@@ -16,7 +16,7 @@ rePaPer transforms lengthy PDFs into concise, easy-to-digest summaries using pow
 ## 🛠 Tech Stack
 
 -   **Frontend**: React, TypeScript, Vite, Tailwind CSS
--   **Backend**: FastAPI (Python 3), Pydantic, Langchain
+-   **Backend**: FastAPI (Python 3), Pydantic, Langchain, Logfire (for logging)
 -   **Containerization**: Docker, Docker Compose
 
 ## 🏃‍♂️ Quick Start
@@ -32,11 +32,12 @@ The easiest way to get rePaPer running.
     ```
 
 2.  **Set Up Environment Variables:**
-    *   **Backend:** Create a `.env` file inside the `backend/` directory (`backend/.env`). Add your API keys:
-        ```dotenv
-        # Get these from Anthropic and Google AI Studio respectively
-        ANTHROPIC_API_KEY=your_anthropic_api_key_here
-        GEMINI_API_KEY=your_gemini_api_key_here
+    *   **Backend:** Copy the sample environment file and fill in your details:
+        ```bash
+        cd backend/repaper
+        cp .env.sample .env
+        # Now edit .env with your API keys (ANTHROPIC_API_KEY, GEMINI_API_KEY) and optionally LOGFIRE_TOKEN
+        cd ../.. # Go back to the project root
         ```
     *   **Frontend:** Create a `.env` file inside the `frontend/` directory (`frontend/.env`). Set the API URL:
         ```dotenv
@@ -63,20 +64,24 @@ Requires Node.js (v18+) and Python (v3.10+) installed.
     ```
 
 2.  **Backend Setup:**
-    *   Navigate to the backend directory: `cd backend`
+    *   Navigate to the backend service directory: `cd backend/repaper`
     *   Create and activate a virtual environment (recommended):
         ```bash
         python -m venv venv
         source venv/bin/activate # On Windows use `venv\Scripts\activate`
         ```
     *   Install dependencies: `pip install -r requirements.txt`
-    *   Create the `.env` file as described in the Docker setup (`backend/.env`) with your API keys.
+    *   Copy the sample environment file and fill it out:
+        ```bash
+        cp .env.sample .env
+        # Now edit .env with your API keys and optional Logfire token
+        ```
     *   Run the FastAPI server: `uvicorn repaper.main:app --reload --host 0.0.0.0 --port 8000`
 
 3.  **Frontend Setup (in a separate terminal):**
-    *   Navigate to the frontend directory: `cd ../frontend`
+    *   Navigate to the frontend directory: `cd ../../frontend`
     *   Install dependencies: `npm install`
-    *   Create the `.env` file as described in the Docker setup (`frontend/.env`) pointing to the backend (`VITE_API_BASE_URL=http://localhost:8000`).
+    *   Create the `.env` file (`frontend/.env`) pointing to the backend (`VITE_API_BASE_URL=http://localhost:8000`).
     *   Start the development server: `npm run dev`
 
 4.  **Access the App:**
@@ -86,11 +91,8 @@ Requires Node.js (v18+) and Python (v3.10+) installed.
 
 Configuration is managed via `.env` files:
 
-*   **`frontend/.env`**:
-    *   `VITE_API_BASE_URL`: The URL of the running backend API. Defaults to `http://localhost:8000` for local development.
-*   **`backend/.env`**:
-    *   `ANTHROPIC_API_KEY`: Your API key for Anthropic (Claude models).
-    *   `GEMINI_API_KEY`: Your API key for Google AI Studio (Gemini models).
+*   **`frontend/.env`**: Contains `VITE_API_BASE_URL` pointing to the backend.
+*   **`backend/repaper/.env`**: Contains API keys (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and optionally the `LOGFIRE_TOKEN`. Copy from `backend/repaper/.env.sample`.
 
 ## 📝 Production Build (Frontend)
 

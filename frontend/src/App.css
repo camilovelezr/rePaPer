@@ -22,11 +22,16 @@ textarea:focus {
 
 /* Minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -34,8 +39,16 @@ textarea:focus {
   border-radius: 9999px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Subtle file drop animation */
@@ -207,16 +220,32 @@ button:not(:disabled):active {
 
 /* Elegant scrollbar for code blocks */
 pre::-webkit-scrollbar {
-  height: 4px;
+  height: 8px;
 }
 
 pre::-webkit-scrollbar-track {
   background: transparent;
 }
 
+.dark pre::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.3);
+}
+
 pre::-webkit-scrollbar-thumb {
   background: rgba(99, 102, 241, 0.5);
   border-radius: 9999px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+.dark pre::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.dark pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
 }
 
 /* Backdrop blur effect */
@@ -678,4 +707,36 @@ button[aria-label="Toggle dark mode"] {
 
 .dark .section-count {
   color: #E5E7EB !important;
+}
+
+/* Dropdown scrollbar styles */
+.max-h-\[600px\].overflow-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.max-h-\[600px\].overflow-auto::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.dark .max-h-\[600px\].overflow-auto::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.3);
+  margin: 4px 0;
+}
+
+.max-h-\[600px\].overflow-auto::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 9999px;
+}
+
+.max-h-\[600px\].overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+.dark .max-h-\[600px\].overflow-auto::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark .max-h-\[600px\].overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }

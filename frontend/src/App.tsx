@@ -1,4 +1,4 @@
-import { useState, useRef, DragEvent, ChangeEvent, useEffect } from 'react'
+import { useState, useRef, DragEvent, ChangeEvent, useEffect, useReducer } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast'
 interface ApiResponse {
   markdown: string;
   title: string;
+  visible: boolean;
 }
 
 interface ProgressState {
@@ -155,6 +156,89 @@ const markdownComponents = {
   }
 }
 
+// --- Reducer Logic --- START
+type AppState = {
+  isLoading: boolean;
+  progress: ProgressState | null;
+  partialSummaries: string[];
+  response: ApiResponse | null;
+};
+
+type AppAction =
+  | { type: 'START_PROCESS' }
+  | { type: 'SET_PROGRESS'; payload: { data: string; title?: string; total_sections?: number, section_number?: number } }
+  | { type: 'ADD_PARTIAL_SUMMARY'; payload: string }
+  | { type: 'SET_COMPLETE'; payload: { title: string } }
+  | { type: 'SET_ERROR'; payload: string }
+  | { type: 'RESET' } // Optional: Might be useful
+
+const initialState: AppState = {
+  isLoading: false,
+  progress: null,
+  partialSummaries: [],
+  response: null,
+};
+
+function appReducer(state: AppState, action: AppAction): AppState {
+  // Only log actions, not full payload details
+  console.log('Reducer action:', action.type);
+
+  const newState = (() => {
+    switch (action.type) {
+      case 'START_PROCESS':
+        return {
+          ...initialState,
+          isLoading: true,
+          progress: { message: 'Starting...', currentSection: 0, totalSections: 0 },
+        };
+      case 'SET_PROGRESS': {
+        const { data, title, total_sections, section_number } = action.payload;
+        const currentProgress = state.progress ?? { message: '', currentSection: 0, totalSections: 0 };
+        const newProgress = { ...currentProgress };
+        newProgress.message = data;
+        if (title) newProgress.title = title;
+        if (total_sections !== undefined) newProgress.totalSections = total_sections;
+        if (section_number !== undefined) newProgress.currentSection = section_number;
+
+        return { ...state, progress: newProgress };
+      }
+      case 'ADD_PARTIAL_SUMMARY':
+        return {
+          ...state,
+          partialSummaries: [...state.partialSummaries, action.payload],
+        };
+      case 'SET_COMPLETE': {
+        const finalMarkdown = state.partialSummaries.join('');
+        toast.success('Summary generated successfully!', { /* ... styles ... */ });
+        return {
+          ...state,
+          isLoading: false,
+          progress: null,
+          response: {
+            markdown: finalMarkdown,
+            title: action.payload.title,
+            visible: true
+          },
+        };
+      }
+      case 'SET_ERROR':
+        return {
+          ...state,
+          isLoading: false,
+          progress: null,
+        };
+      case 'RESET':
+        return initialState;
+      default:
+        return state;
+    }
+  })();
+
+  // Remove detailed progress logging
+  return newState;
+}
+// --- Reducer Logic --- END
+
 function App() {
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -162,15 +246,73 @@ function App() {
   const [models, setModels] = useState<string[]>([])
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [instructions, setInstructions] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [response, setResponse] = useState<ApiResponse | null>(null)
-  const [progress, setProgress] = useState<ProgressState | null>(null)
-  const [partialSummaries, setPartialSummaries] = useState<string[]>([])
   const [error, setError] = useState<ErrorToast>({ message: '', visible: false })
   const [previewMode, setPreviewMode] = useState(true)
+
+  // --- useReducer Hook ---
+  const [appState, dispatch] = useReducer(appReducer, initialState);
+  const { isLoading, progress, partialSummaries, response } = appState; // Destructure state
+
+  // State to hold the latest parsed SSE event (still needed for effect trigger)
+  const [lastEventData, setLastEventData] = useState<any>(null);
+
+  const showError = (message: string) => {
+    setError({ message, visible: true });
+    setTimeout(() => setError({ message: '', visible: false }), 5000); // Hide after 5 seconds
+  };
+
+  // --- Effect to dispatch actions based on lastEventData --- START
+  useEffect(() => {
+    if (!lastEventData) return;
+
+    const data = lastEventData;
+    // Remove verbose event data logging
+
+    try {
+      switch (data.event) {
+        case 'progress':
+          dispatch({ type: 'SET_PROGRESS', payload: data });
+          break;
+        case 'section_summary':
+          // Single log for section updates instead of multiple
+          console.log(`Processing section ${data.section_number}/${data.total_sections}`);
+
+          // Dispatch progress update for numbers
+          dispatch({
+            type: 'SET_PROGRESS', payload: {
+              data: `Processing section ${data.section_number}/${data.total_sections}...`,
+              section_number: data.section_number,
+              total_sections: data.total_sections
+            }
+          });
+          // Dispatch adding the summary text
+          dispatch({ type: 'ADD_PARTIAL_SUMMARY', payload: data.data });
+          break;
+        case 'complete':
+          console.log('Summary complete');
+          dispatch({ type: 'SET_COMPLETE', payload: { title: data.title } });
+          break;
+        case 'error':
+          console.error('Error event:', data.data);
+          showError(data.data || 'An error occurred during processing.');
+          dispatch({ type: 'SET_ERROR', payload: data.data });
+          break;
+        default:
+          console.warn('Unknown SSE event type:', data.event);
+      }
+    } catch (reducerError) {
+      console.error("Error in event processing:", reducerError);
+      showError('An internal error occurred processing the update.');
+      dispatch({ type: 'SET_ERROR', payload: 'Internal processing error' });
+    }
+
+    // Always reset after processing to allow new events to be processed
+    setLastEventData(null);
+  }, [lastEventData]);
+  // --- Effect to handle state updates based on lastEventData --- END
 
   // Initialize preview mode based on localStorage
   useEffect(() => {
@@ -261,156 +403,98 @@ function App() {
     }
   }
 
-  const showError = (message: string) => {
-    setError({ message, visible: true });
-    setTimeout(() => setError({ message: '', visible: false }), 5000); // Hide after 5 seconds
-  };
-
   const handleButtonClick = async () => {
-    if (!file || !selectedModel) return
-
-    setIsLoading(true)
-    setProgress({ message: 'Starting...', currentSection: 0, totalSections: 0 })
-    setPartialSummaries([])
-    setResponse(null)
+    // Reset state before starting new request
+    dispatch({ type: 'START_PROCESS' });
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('instructions', instructions || 'Summarize this')
-      formData.append('model', selectedModel)
+      const formData = new FormData();
+      if (file) {
+        formData.append('file', file);
+      }
+      // Add instructions and selected model to the form data
+      formData.append('instructions', instructions);
+      formData.append('model', selectedModel);
 
-      if (previewMode) {
-        // Existing SSE preview workflow
-        const response = await fetch(`${API_BASE_URL}/api/summarize`, {
-          method: 'POST',
-          body: formData,
-        })
+      const response = await fetch(`${API_BASE_URL}/api/summarize`, {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      console.log('Connected to SSE stream');
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Unable to read response stream');
+      }
+
+      let buffer = '';
+      let currentEventData = {};
+
+      // Read the stream
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          // Only log when stream ends, not content of buffer
+          console.log('Stream ended');
+          break;
         }
 
-        const reader = response.body?.getReader()
-        if (!reader) {
-          throw new Error('No reader available')
-        }
+        // Convert the chunk to text and add to the buffer
+        const chunk = new TextDecoder().decode(value);
+        buffer += chunk;
+        // Remove chunk logging
 
-        const decoder = new TextDecoder()
+        // Process complete lines from the buffer
+        while (buffer.includes('\n')) {
+          const lineEndIndex = buffer.indexOf('\n');
+          const line = buffer.slice(0, lineEndIndex).trim();
+          buffer = buffer.slice(lineEndIndex + 1);
 
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+          // Remove line processing logs
 
-          const chunk = decoder.decode(value)
-          const lines = chunk.split('\n')
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = JSON.parse(line.slice(6))
-              console.log('SSE event:', data)
-
-              switch (data.event) {
-                case 'progress':
-                  setProgress(prev => prev ? {
-                    ...prev,
-                    message: data.data,
-                    title: data.title || prev.title,
-                  } : {
-                    message: data.data,
-                    currentSection: 0,
-                    totalSections: 0,
-                    title: data.title,
-                  })
-                  break
-
-                case 'section_summary':
-                  setProgress(prev => prev ? {
-                    ...prev,
-                    currentSection: data.section_number,
-                    totalSections: data.total_sections,
-                  } : {
-                    message: 'Processing sections...',
-                    currentSection: data.section_number,
-                    totalSections: data.total_sections,
-                  })
-                  setPartialSummaries(prev => [...prev, data.data])
-                  break
-
-                case 'complete':
-                  setResponse({
-                    markdown: data.data,
-                    title: data.title,
-                  })
-                  setIsLoading(false)
-                  setProgress(null)
-                  toast.success('Summary generated successfully!', {
-                    icon: '✨',
-                    style: {
-                      borderRadius: '10px',
-                      background: '#333',
-                      color: '#fff',
-                    },
-                  })
-                  return
-
-                case 'error':
-                  throw new Error(data.data)
+          if (line.startsWith('data:')) {
+            // Extract data content (after "data:")
+            const dataContent = line.slice(5).trim();
+            if (dataContent) {
+              try {
+                // Parse the JSON data
+                const jsonData = JSON.parse(dataContent);
+                Object.assign(currentEventData, jsonData);
+                // Remove JSON data logging
+              } catch (e) {
+                console.error('Error parsing JSON:', e);
               }
+            }
+          } else if (line.startsWith('event:')) {
+            // Extract and set event type (after "event:")
+            const eventType = line.slice(6).trim();
+            currentEventData = { ...currentEventData, event: eventType };
+            // Remove event type logging
+          } else if (line === '') {
+            // Empty line marks the end of an event
+            if (Object.keys(currentEventData).length > 0) {
+              // Only log event type rather than full event data
+              if ('event' in currentEventData && currentEventData.event) {
+                console.log(`Received ${currentEventData.event} event`);
+              }
+              setLastEventData(currentEventData);
+              // Reset for next event
+              currentEventData = {};
             }
           }
         }
-      } else {
-        // Direct PDF generation and download
-        const response = await fetch(`${API_BASE_URL}/api/summarize-to-pdf`, {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        // Get filename from Content-Disposition header
-        const contentDisposition = response.headers.get('Content-Disposition')
-        let filename = 'summary.pdf'
-        if (contentDisposition) {
-          const matches = /filename="([^"]*)"/.exec(contentDisposition)
-          if (matches && matches[1]) {
-            filename = matches[1]
-          }
-        }
-
-        // Create a blob from the PDF stream
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-
-        setIsLoading(false)
-        setProgress(null)
-        toast.success('PDF generated and downloaded!', {
-          icon: '📄',
-          style: {
-            borderRadius: '10px',
-            background: '#333',
-            color: '#fff',
-          },
-        })
       }
-
     } catch (error) {
-      console.error('Error processing file:', error)
-      setIsLoading(false)
-      setProgress(null)
-      showError(error instanceof Error ? error.message : 'An unknown error occurred')
+      console.error('Error during processing:', error);
+      showError('Failed to process file: ' + (error instanceof Error ? error.message : String(error)));
+      dispatch({ type: 'SET_ERROR', payload: 'Connection error' });
     }
-  }
+  };
 
   const openFileSelector = () => {
     fileInputRef.current?.click()
