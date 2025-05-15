@@ -11,11 +11,14 @@ logfire.instrument_pydantic_ai()
 LLM_MODELS = {
     "Gemini 2.5 Pro": "google-gla:gemini-2.5-pro-exp-03-25",
     "Gemini 2.5 Flash": "google-gla:gemini-2.5-flash-preview-04-17",
-    "Gemini 2.5 Pro $": "google-gla:gemini-2.5-pro-preview-03-25",
+    "Gemini 2.5 Pro $": "google-gla:gemini-2.5-pro-preview-05-06",
     "Claude 3.7 Sonnet": "anthropic:claude-3-7-sonnet-latest",
     "Claude 3.5 Haiku": "anthropic:claude-3-5-haiku-latest",
     "Claude 3.5 Sonnet": "anthropic:claude-3-5-sonnet-latest",
     "GPT-4.1": "openai:gpt-4.1",
+    "GPT-4.1-mini": "openai:gpt-4.1-mini",
+    "GPT-4.1-nano": "openai:gpt-4.1-nano",
+    "GPT-4o": "openai:gpt-4o-latest",
     "o4-mini": "openai:o4-mini",
 }
 
@@ -158,11 +161,15 @@ Be VERY THOROUGH.
 </output_instructions>
 Considerations:
 - You are very thorough, you do not omit any information.
-- If you need to be specific, you are allowed to be so.
+- Do not write 'The abstract says ...' or similar, instead just summarize the abstract or the section you are working on.
 - The goal of the summary is not to be short, but to be comprehensive.
 - Include tables (as markdown tables) if necessary.
+- Include math equations (as INLINE latex equations) if necessary, ALWAYS enclose the equations in dollar signs.
 - NEVER, AND I MEAN NEVER, include something that is NOT IN THE DOCUMENT.
 - I REPEAT: DO NOT MAKE UP ANYTHING, DO NOT USE ANYTHING FROM YOUR KNOWLEDGE THAT IS NOT IN THE DOCUMENT.
+
+Remember:
+- Always enclose all latex equations in dollar signs.
 
 Do not start your response with ```markdown, just output the markdown.
 Do not start your response with something like "Here is the summary of the section <section title>".

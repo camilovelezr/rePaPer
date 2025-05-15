@@ -1,7 +1,10 @@
-from pathlib import Path
-from markdown_pdf import MarkdownPdf, Section
+"""PDF generator from markdown with math support."""
+
 import io
+from pathlib import Path
+
 import fitz  # PyMuPDF
+from markdown_pdf import MarkdownPdf, Section
 
 
 def convert_markdown_to_pdf(
@@ -148,14 +151,6 @@ def convert_markdown_to_pdf(
         border-bottom: 2px solid #e2e8f0;
     }
 
-    /* Code blocks */
-    code {
-        font-family: monospace;
-        font-size: 10pt;
-        padding: 0.18em 0.36em;
-        background-color: #f5f5f5;
-        border-radius: 3pt;
-    }
 
     pre {
         background-color: #f5f5f5;
@@ -188,6 +183,7 @@ def convert_markdown_to_pdf(
 
     # Add the content as a section with custom CSS
     pdf.add_section(Section(md_content, paper_size="Letter"), user_css=css)
+    # pdf.add_section(Section(md_content, paper_size="Letter"))
 
     # Set metadata
     pdf.meta["title"] = title
@@ -217,11 +213,3 @@ def convert_markdown_to_pdf(
         # Save the PDF
         pdf.save(output_file)
         return output_file
-
-
-if __name__ == "__main__":
-    convert_markdown_to_pdf(
-        Path("/Users/cv/code/rePaPer/backend/repaper/t.md"),
-        "Nutrición intrahospitalaria del prematuro. Recomendaciones de la Rama de Neonatología de la Sociedad Chilena de Pediatría",
-        return_bytes=False,
-    )
