@@ -1,14 +1,47 @@
 # 📄 rePaPer
 
-> Stop drowning in documents. Get the gist, fast. ✨
+> Stop drowning in documents. Get the gist, fast, with intelligent AI Agents. ✨
 
-rePaPer transforms lengthy PDFs into concise, easy-to-digest summaries using powerful AI models. Upload your document, choose your preferred AI (or let us pick!), and get a summary delivered as Markdown or a downloadable PDF. Spend less time reading and more time understanding.
+rePaPer leverages powerful AI Agents to transform lengthy PDFs into concise, easy-to-digest summaries. Upload your document, choose your preferred AI (Anthropic Claude or Google Gemini), and get a beautifully formatted summary delivered as a downloadable PDF. Spend less time reading and more time understanding.
+
+## 🤩 See rePaPer in Action!
+
+<p align="center">
+  <img alt="rePaPer Dark Mode Interface" src="screenshot_dark.png" width="48%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img alt="rePaPer Light Mode Interface" src="screenshot_light.png" width="48%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
+<br/>
+
+## 🎯 Why Most AI Summaries Fall Short
+
+Ever tried to get ChatGPT or any LLM to summarize a large PDF? You get a couple pages of generic fluff, no matter if your doc is 5 pages or 50. Why? Because every LLM has a hard limit on how much it can output in one go. So you end up with:
+
+*   Summaries that are always the same length, regardless of the input.
+*   Important details, tables, and nuance? Lost. Context? Missing. Depth? Not there.
+*   You ask for a deep dive, you get a shallow overview.
+
+If you actually want to *understand* a document, not just get a surface-level blurb, you need something smarter. That's where rePaPer comes in.
+
+## 🚀 Why rePaPer is Different (and Better)
+
+rePaPer isn't just another wrapper around an LLM. It's a multi-agent system that:
+
+*   **🧠 Uses Multiple AI Models**: Anthropic Claude, Google Gemini, and OpenAI (GPT-4.1, o4-mini, and more). Pick your favorite, or let the system choose.
+*   **🤖 Orchestrates Like a Pro**: An AI "orchestrator" agent reads your PDF, breaks it into logical sections, and assigns each chunk to a specialized summarizer agent. No more one-size-fits-all summaries.
+*   **🌍 Multilingual by Default**: You can give instructions in any language, and rePaPer will adapt. Want your summary in Spanish, French, or another language? Go for it.
+*   **📏 Scales With Your Doc**: The summary grows with the document. 5 pages? 5 pages of insight. 50 pages? You get a summary that actually covers the whole thing.
+*   **📊 Tables & Data Included**: Important tables are preserved and included in your summary. No more missing data.
+*   **🎨 Beautiful PDF Output**: You get a clean, readable PDF that you can actually use, share, or present.
+*   **⚡ Real-Time Progress**: See exactly what's happening as your doc is processed. No more staring at a spinner, wondering if it's working.
+*   **✨ Effortless UI**: Drag, drop, done. Dark mode, light mode, whatever you want.
+*   **🖼️ Figures & Images (Coming Soon)**: We're working on including important figures and images too. Stay tuned.
 
 ## 🚀 Core Features
 
--   **AI-Powered Summarization**: Leverages state-of-the-art LLMs (Anthropic Claude & Google Gemini) to extract key information.
--   **Flexible Output**: View summaries directly in the app (Markdown) or download them as neatly formatted PDFs.
--   **Model Selection**: Choose between different AI models to tailor the summarization style.
+-   **AI-Powered Summarization**: Leverages state-of-the-art LLMs (OpenAI, Anthropic Claude, Google Gemini) to extract key information.
+-   **Flexible Output**: Download summaries as beautifully formatted PDFs.
+-   **Model Selection**: Choose between OpenAI, Anthropic, or Gemini models to tailor the summarization style.
 -   **Real-time Progress**: Track the summarization process with clear visual feedback.
 -   **Sleek Interface**: Enjoy a clean, modern UI with Dark Mode support.
 -   **Drag & Drop Upload**: Easily add your PDF files.
@@ -16,8 +49,7 @@ rePaPer transforms lengthy PDFs into concise, easy-to-digest summaries using pow
 ## 🛠 Tech Stack
 
 -   **Frontend**: React, TypeScript, Vite, Tailwind CSS
--   **Backend**: FastAPI (Python 3), Pydantic, Langchain, Logfire (for logging)
--   **Containerization**: Docker, Docker Compose
+-   **Backend**: FastAPI (Python 3), PydanticAI, Logfire
 
 ## 🏃‍♂️ Quick Start
 
@@ -36,7 +68,7 @@ The easiest way to get rePaPer running.
         ```bash
         cd backend/repaper
         cp .env.sample .env
-        # Now edit .env with your API keys (ANTHROPIC_API_KEY, GEMINI_API_KEY) and optionally LOGFIRE_TOKEN
+        # Now edit .env with your API keys (ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY) and optionally LOGFIRE_TOKEN
         cd ../.. # Go back to the project root
         ```
     *   **Frontend:** Create a `.env` file inside the `frontend/` directory (`frontend/.env`). Set the API URL:
@@ -53,46 +85,12 @@ The easiest way to get rePaPer running.
 4.  **Access the App:**
     Open your browser and navigate to `http://localhost:5173` (or the port specified in your `docker-compose.yml` if different). The frontend defaults to port 5173 via Vite, while the backend runs on port 8000.
 
-### 🔧 Manual Setup (If you enjoy pain)
-
-Requires Node.js (v18+) and Python (v3.10+) installed.
-
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/camilovelezr/rePaPer.git
-    cd rePaPer
-    ```
-
-2.  **Backend Setup:**
-    *   Navigate to the backend service directory: `cd backend/repaper`
-    *   Create and activate a virtual environment (recommended):
-        ```bash
-        python -m venv venv
-        source venv/bin/activate # On Windows use `venv\Scripts\activate`
-        ```
-    *   Install dependencies: `pip install -r requirements.txt`
-    *   Copy the sample environment file and fill it out:
-        ```bash
-        cp .env.sample .env
-        # Now edit .env with your API keys and optional Logfire token
-        ```
-    *   Run the FastAPI server: `uvicorn repaper.main:app --reload --host 0.0.0.0 --port 8000`
-
-3.  **Frontend Setup (in a separate terminal):**
-    *   Navigate to the frontend directory: `cd ../../frontend`
-    *   Install dependencies: `npm install`
-    *   Create the `.env` file (`frontend/.env`) pointing to the backend (`VITE_API_BASE_URL=http://localhost:8000`).
-    *   Start the development server: `npm run dev`
-
-4.  **Access the App:**
-    Open your browser to the URL provided by Vite (usually `http://localhost:5173`).
-
 ## 🌍 Environment Variables
 
 Configuration is managed via `.env` files:
 
 *   **`frontend/.env`**: Contains `VITE_API_BASE_URL` pointing to the backend.
-*   **`backend/repaper/.env`**: Contains API keys (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and optionally the `LOGFIRE_TOKEN`. Copy from `backend/repaper/.env.sample`.
+*   **`backend/repaper/.env`**: Contains API keys (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`) and optionally the `LOGFIRE_TOKEN`. Copy from `backend/repaper/.env.sample`.
 
 ## 📝 Production Build (Frontend)
 
