@@ -19,9 +19,10 @@ cp .env.sample .env
 Then, edit the `.env` file with your actual API keys:
 
 ```dotenv
-# Required API Keys
+# API Keys (required for using each AI model)
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 
 # Optional: Logfire Configuration (if used)
 # LOGFIRE_TOKEN=your_logfire_token_here
