@@ -7,9 +7,9 @@ rePaPer leverages powerful AI Agents to transform lengthy PDFs into concise, eas
 ## 🤩 See rePaPer in Action!
 
 <p align="center">
-  <img alt="rePaPer Dark Mode Interface" src="screenshot_dark.png" width="48%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+  <img alt="rePaPer Dark Mode Interface" src="docs/screenshot_dark.png" width="48%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img alt="rePaPer Light Mode Interface" src="screenshot_light.png" width="48%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+  <img alt="rePaPer Light Mode Interface" src="docs/screenshot_light.png" width="48%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 </p>
 <br/>
 
