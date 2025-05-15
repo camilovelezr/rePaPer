@@ -4,7 +4,6 @@ from PyPDF2 import PdfReader, PdfWriter
 
 import logfire
 from pydantic_ai import Agent, BinaryContent, RunContext
-from pydantic_ai.settings import ModelSettings
 
 logfire.configure()
 logfire.instrument_pydantic_ai()
@@ -16,6 +15,8 @@ LLM_MODELS = {
     "Claude 3.7 Sonnet": "anthropic:claude-3-7-sonnet-latest",
     "Claude 3.5 Haiku": "anthropic:claude-3-5-haiku-latest",
     "Claude 3.5 Sonnet": "anthropic:claude-3-5-sonnet-latest",
+    "GPT-4.1": "openai:gpt-4.1",
+    "o4-mini": "openai:o4-mini",
 }
 
 LLM_MODEL_KEYS = list(LLM_MODELS.keys())
@@ -179,9 +180,6 @@ mini_summarizer = Agent(
     deps_type=MiniSummarizerDeps,
     output_type=str,
     instrument=True,
-    model_settings=ModelSettings(
-        temperature=0.25,
-    ),
 )
 
 

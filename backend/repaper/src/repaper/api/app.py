@@ -17,6 +17,7 @@ from repaper.agents.summarizer import (
 )
 from repaper.agents.md_to_pdf import convert_markdown_to_pdf
 from pydantic_ai import BinaryContent
+from pydantic_ai.models import ModelSettings
 from pydantic import BaseModel
 
 import logfire
@@ -124,7 +125,7 @@ async def summarize_generator(
                     yield json.dumps(json_response)
                     await asyncio.sleep(0.1)  # Allow event to send
             except Exception as e:
-                span.exception(e)
+                logfire.error(f"Error during summarization: {e}")
                 yield json.dumps({"event": "error", "data": str(e)})
         # 3. Send final complete signal (no data needed)
         json_response = {
@@ -256,6 +257,9 @@ async def summarize_to_pdf(
                     language=orchestration_result.output.language,
                 ),
                 model=LLM_MODELS.get(model),
+                model_settings=ModelSettings(
+                    temperature=1 if model == "o4-mini" else 0.25,
+                ),
             )
 
             # Add to the complete summary
