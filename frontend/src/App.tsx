@@ -254,7 +254,7 @@ function App() {
 
   // --- useReducer Hook ---
   const [appState, dispatch] = useReducer(appReducer, initialState);
-  const { isLoading, progress, partialSummaries, response } = appState; // Destructure state
+  const { isLoading, progress, partialSummaries, response } = appState;
 
   // State to hold the latest parsed SSE event (still needed for effect trigger)
   const [lastEventData, setLastEventData] = useState<any>(null);
@@ -277,10 +277,8 @@ function App() {
           dispatch({ type: 'SET_PROGRESS', payload: data });
           break;
         case 'section_summary':
-          // Single log for section updates instead of multiple
           console.log(`Processing section ${data.section_number}/${data.total_sections}`);
 
-          // Dispatch progress update for numbers
           dispatch({
             type: 'SET_PROGRESS', payload: {
               data: `Processing section ${data.section_number}/${data.total_sections}...`,
@@ -288,7 +286,6 @@ function App() {
               total_sections: data.total_sections
             }
           });
-          // Dispatch adding the summary text
           dispatch({ type: 'ADD_PARTIAL_SUMMARY', payload: data.data });
           break;
         case 'complete':

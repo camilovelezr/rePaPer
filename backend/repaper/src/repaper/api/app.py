@@ -54,7 +54,7 @@ async def summarize_generator(
             {"event": "progress", "data": "Analyzing document structure..."}
         )
         orchestration_result = await run_orchestrator(pdf_content, instructions, model)
-        logfire.debug(f"Orchestrator result: {orchestration_result}")
+        logfire.debug("Orchestrator result", result=str(orchestration_result))
         total_sections = len(orchestration_result.output.sections)
         json_response = {
             "event": "progress",
@@ -63,7 +63,8 @@ async def summarize_generator(
             "total_sections": total_sections,
         }
         logfire.debug(
-            f"Orchestrator progress JSON response: {json.dumps(json_response)}"
+            "Orchestrator progress JSON response",
+            json_response=json.dumps(json_response),
         )
         yield json.dumps(json_response)
         await asyncio.sleep(0.1)  # Allow event to send
@@ -82,7 +83,8 @@ async def summarize_generator(
                         "data": f"Summarizing section {summarized_sections}/{total_sections} (Pages: {', '.join(map(str, section.pages))})...",
                     }
                     logfire.debug(
-                        f"Section summary progress JSON response: {json.dumps(json_response)}"
+                        "Section summary progress JSON response",
+                        json_response=json.dumps(json_response),
                     )
                     yield json.dumps(json_response)
                     await asyncio.sleep(0.1)  # Allow event to send
@@ -120,23 +122,30 @@ async def summarize_generator(
                         "total_sections": total_sections,
                     }
                     logfire.debug(
-                        f"Section summary JSON response: {json.dumps(json_response)}"
+                        "Section summary JSON response",
+                        json_response=json.dumps(json_response),
                     )
                     yield json.dumps(json_response)
                     await asyncio.sleep(0.1)  # Allow event to send
             except Exception as e:
-                logfire.error(f"Error during summarization: {e}")
+                logfire.error("Error during summarization", error=str(e))
                 yield json.dumps({"event": "error", "data": str(e)})
+
+        # Add a longer delay to ensure all section summaries are sent
+        await asyncio.sleep(0.5)  # Give time for all events to flush
+
         # 3. Send final complete signal (no data needed)
         json_response = {
             "event": "complete",
             "title": orchestration_result.output.title,  # Still send title
         }
-        logfire.debug(f"Final completion signal: {json.dumps(json_response)}")
+        logfire.debug(
+            "Final completion signal", json_response=json.dumps(json_response)
+        )
         yield json.dumps(json_response)
 
     except Exception as e:
-        logfire.error(f"Error during summarization: {e}")
+        logfire.error("Error during summarization", error=str(e))
         # Yield an error event
         error_message = f"An error occurred: {str(e)}"
         yield json.dumps({"event": "error", "data": error_message})
@@ -166,7 +175,9 @@ async def summarize_pdf(
     """
     try:
         # Read the uploaded PDF file
-        logfire.info(f"Reading uploaded PDF file: {file}")
+        logfire.info(
+            "Reading uploaded PDF file", filename=file.filename, size=file.size
+        )
         pdf_content = await file.read()
 
         # Return an EventSourceResponse with the generator
@@ -179,7 +190,7 @@ async def summarize_pdf(
         # if file reading fails, but good practice.
         # The main error handling is inside the generator now.
         # We can't easily return an EventSourceResponse here if the initial read fails.
-        logfire.error(f"Error before starting generator: {e}")
+        logfire.error("Error before starting generator", error=str(e))
         # A standard HTTP error might be more appropriate in this specific case.
         raise HTTPException(
             status_code=500, detail=f"Failed to read file or start process: {str(e)}"
@@ -195,7 +206,7 @@ class MarkdownToPdfRequest(BaseModel):
 async def markdown_to_pdf(request: MarkdownToPdfRequest):
     """Convert markdown to PDF."""
     try:
-        logfire.info(f"Converting markdown to PDF: {request.title}")
+        logfire.info("Converting markdown to PDF", title=request.title)
         pdf_bytes = convert_markdown_to_pdf(
             title=request.title, input_markdown=request.markdown, return_bytes=True
         )
@@ -205,7 +216,7 @@ async def markdown_to_pdf(request: MarkdownToPdfRequest):
             headers={"Content-Disposition": f'attachment; filename="document.pdf"'},
         )
     except Exception as e:
-        logfire.error(f"PDF generation error: {str(e)}")
+        logfire.error("PDF generation error", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -239,10 +250,10 @@ async def summarize_to_pdf(
 
         # Process each section
         for section in orchestration_result.output.sections:
-            logfire.info(f"Summarizing section: {section}")
+            logfire.info("Summarizing section", section=str(section))
             # Extract pages for this section
             section_pdf = extract_pdf_pages_from_bytes(pdf_content, section.pages)
-            logfire.info(f"Extracted section PDF: {len(section_pdf)}")
+            logfire.info("Extracted section PDF", size=len(section_pdf))
             # Summarize this section
             summary_result = await mini_summarizer.run(
                 [
@@ -263,12 +274,12 @@ async def summarize_to_pdf(
             )
 
             # Add to the complete summary
-            logfire.info(f"Summary result: {summary_result.output}")
+            logfire.info("Summary result", output=summary_result.output)
             complete_summary += summary_result.output + "\n\n"
         # Convert markdown to PDF bytes
         title = orchestration_result.output.title
         pdf_bytes = convert_markdown_to_pdf(complete_summary, title, return_bytes=True)
-        logfire.info(f"PDF bytes: {len(pdf_bytes)}")
+        logfire.info("PDF bytes", size=len(pdf_bytes))
         # Return the PDF as a downloadable file
         return StreamingResponse(
             io.BytesIO(pdf_bytes),
@@ -279,7 +290,7 @@ async def summarize_to_pdf(
         )
 
     except Exception as e:
-        logfire.error(f"Error during summarization: {e}")
+        logfire.error("Error during summarization", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -294,7 +305,7 @@ def extract_pdf_pages_from_bytes(pdf_bytes, page_numbers):
     Returns:
         bytes: The extracted pages as PDF bytes
     """
-    logfire.info(f"Extracting pages from PDF: {len(pdf_bytes)}")
+    logfire.info("Extracting pages from PDF", size=len(pdf_bytes))
     # Create a BytesIO object from the bytes
     pdf_io = io.BytesIO(pdf_bytes)
 

@@ -10,10 +10,16 @@ dependencies = [
     "logfire[fastapi]>=3.14.0",
     "markdown>=3.7",
     "markdown-pdf>=1.5",
-    "pydantic-ai>=0.2.4",
+    "mdit-py-plugins>=0.4.2",
+    "pydantic-ai>=0.2.14",
     "pygments>=2.19.1",
     "pypdf2>=3.0.1",
+    "python-markdown-math>=0.9",
     "python-multipart>=0.0.20",
     "sse-starlette>=2.2.1",
     "uvicorn>=0.27.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

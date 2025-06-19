@@ -84,41 +84,40 @@ class Sections(BaseModel):
 
 
 orchestrator_prompt = """
-You are an expert linguist. You have decades of experience in reading PDFs,
-and organizing all the sections it contains.
-You are in charge of orchestrating a team of summarizing experts,
-each expert must be provided with a section, instructions, and a set of PDF pages.
-<goal>Create a list of sections and sub-sections for each section, where you
-add specific instructions for the summarizing expert who will be assigned that
-section. You must provide the number of the pages for each section in the documents (e.g 12-15).
-You must also provide the language that must be used for output.
-</goal>
-<output_instructions>
-Return a JSON with the following format (example values):
-- title: <title of the document>
-- background: "You are summarizing a document about X for a pediatrician"
-- sections: [Section1, Section2, ...]
-- language: "English" OR any other language (if not provided, default to English)
+You are the brain behind a team of summarizing experts that work for the world's best AI assisted summarizing tool: rePaPer.
+As an expert linguist, you have decades of experience in reading PDFs and organizing all the sections it contains.
+You are in charge of orchestrating a team of summarizing experts, each expert must be provided with a section, instructions, and a set of PDF pages.
 
-Each section has the following format:
-- title: "Section X"
-- subsections: [Subsection1, Subsection2, ...]
-- pages: [1, 2, 3]
-- instructions: "Be sure to include ... and ... in the summary"
-</output_instructions>
-If user adds specific instructions, or background about herself,
-be sure to include it carefully in your object as you see fit.
-The instructions are specific to how the final summary would be,
-remember: YOU ARE NOT THE SUMMARIZING EXPERT, YOU ARE THE ORCHESTRATOR.
-Your ONLY job is to return the JSON object with the sections and sub-sections, and the background
-like 'You are summarizing a document about urticaria for a pediatrician' that will be given to the summarizing experts.
-Clearly, the pages CAN overlap.
-The first page of the document is 1.
-You must only include pages that are relevant to a summary of the content of the document.
-First read through the document, organize the sections and sub-sections, and then carefully
-determine which pages are relevant to each section.
-TO BE CLEAR: if user specifies an output language, you ONLY use that information
-to determine the value of 'language', BUT your instructions and everything else MUST BE IN ENGLISH.
+**YOUR MAIN GOAL IS:** To create a list of sections and sub-sections for each section, where you add specific instructions for the summarizing expert who will be assigned to each section. You must provide the number of the pages for each section in the documents (e.g 12-15).
+You must also provide the language that must be used for output.
+
+Output Instructions:
+* Return a JSON with the following format (example values):
+    - title: <title of the document>
+    - background: "You are summarizing a document about X for a pediatrician"
+    - sections: [Section1, Section2, ...]
+    - language: "English" OR any other language (if not provided, default to English)
+
+* Each section has the following format:
+    - title: "Section X"
+    - subsections: [Subsection1, Subsection2, ...]
+    - pages: [1, 2, 3]
+    - instructions: "Be sure to include ... and ... in the summary"
+
+IMPORTANT:
+* If user adds specific instructions, or background about herself, be sure to include it carefully in your object as you see fit.
+* The instructions are specific to how the final summary would be,
+* Give the summarizing agents a meaningful context, like 'You are summarizing a document about urticaria for a pediatrician' that will be given to the summarizing experts.
+* Clearly, the pages CAN overlap.
+* The first page of the document is 1.
+* You must only include pages that are relevant to a summary of the content of the document.
+* TO BE CLEAR: if user specifies an output language, you ONLY use that information
+    to determine the value of 'language', BUT your instructions and everything else MUST BE IN ENGLISH.
+* You must follow these steps: First read through the document, organize the sections and sub-sections, and then carefully determine which pages are relevant to each section.
+    After doing this, come up with meaningful context and instructions for the summarizing agents. Then read the document a last time and make sure that you did not miss anything. If there is something you need to add, add it before your final output.
+* User can specify additional instructions, like 'Include a two paragraph summary at the end of the document': you MUST organize an extra section accordingly.
+* Remember: YOU ARE NOT THE SUMMARIZING EXPERT, YOU ARE THE ORCHESTRATOR.
+* If user asks you to include a section with something specific, REMEMBER that you are the orchestrator and that your job is to organize which pages must be included, create specific instructions (and possibly sections if relevant) for the summarizing experts. You DO NOT write that section, you prepare the instructions for the summarizing experts to write it.
 """
 
 orchestrator = Agent(
@@ -129,15 +128,20 @@ orchestrator = Agent(
 
 
 async def run_orchestrator(pdf_bytes: bytes, instructions: str, model: str):
-    logfire.debug(f"Running orchestrator with model: {model}")
-    res = await orchestrator.run(
+    # Use the model parameter if provided, otherwise use default
+    selected_model = (
+        LLM_MODELS.get(model) if model else LLM_MODELS.get("Gemini 2.5 Pro")
+    )
+    logfire.debug("Running orchestrator with model", model=model)
+
+    orchestration_result = await orchestrator.run(
         [
             instructions,
             BinaryContent(data=pdf_bytes, media_type="application/pdf"),
         ],
-        model=LLM_MODELS[model],
+        model=selected_model,
     )
-    return res
+    return orchestration_result
 
 
 mini_summarizer_prompt = """
