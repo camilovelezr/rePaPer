@@ -8,13 +8,9 @@ import json
 from typing import Optional
 
 from PyPDF2 import PdfReader, PdfWriter
-from repaper.agents.summarizer import (
-    run_orchestrator,
-    mini_summarizer,
-    MiniSummarizerDeps,
-    LLM_MODEL_KEYS,
-    LLM_MODELS,
-)
+from repaper.agents.sectioner import run_sectioner
+from repaper.models import LLM_MODELS, LLM_MODEL_KEYS
+from repaper.agents.summarizer import SummarizerDeps, summarizer
 from repaper.agents.md_to_pdf import convert_markdown_to_pdf
 from pydantic_ai import BinaryContent
 from pydantic_ai.models import ModelSettings
@@ -53,7 +49,7 @@ async def summarize_generator(
         yield json.dumps(
             {"event": "progress", "data": "Analyzing document structure..."}
         )
-        orchestration_result = await run_orchestrator(pdf_content, instructions, model)
+        orchestration_result = await run_sectioner(pdf_content, instructions, model)
         logfire.debug("Orchestrator result", result=str(orchestration_result))
         total_sections = len(orchestration_result.output.sections)
         json_response = {
@@ -76,7 +72,6 @@ async def summarize_generator(
         with logfire.span("Summarizing sections") as span:
             try:
                 for section in orchestration_result.output.sections:
-                    summarized_sections += 1
                     span.message
                     json_response = {
                         "event": "progress",
@@ -94,25 +89,36 @@ async def summarize_generator(
                         pdf_content, section.pages
                     )
                     logfire.info("Extracted section PDF")
+                    if summarized_sections == 0:
+                        deps_ = SummarizerDeps(
+                            section=section,
+                            background=orchestration_result.output.background,
+                            language=orchestration_result.output.language,
+                            previous_summary="null",
+                        )
+                    else:
+                        deps_ = SummarizerDeps(
+                            section=section,
+                            background=orchestration_result.output.background,
+                            language=orchestration_result.output.language,
+                            previous_summary=complete_summary,
+                        )
 
-                    summary_result = await mini_summarizer.run(
+                    summary_result = await summarizer.run(
                         [
                             BinaryContent(
                                 data=section_pdf,
                                 media_type="application/pdf",
                             )
                         ],
-                        deps=MiniSummarizerDeps(
-                            section=section,
-                            background=orchestration_result.output.background,
-                            language=orchestration_result.output.language,
-                        ),
+                        deps=deps_,
                         model=LLM_MODELS.get(model),  # Use .get for safety
                     )
 
                     # Add to the complete summary
                     section_summary = summary_result.output + "\n\n"
                     complete_summary += section_summary
+                    summarized_sections += 1
 
                     # Yield the summary part for this section
                     json_response = {
