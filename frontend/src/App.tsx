@@ -1,8 +1,4 @@
 import { useState, useRef, DragEvent, ChangeEvent, useEffect, useReducer } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import './App.css'
 import { toast } from 'react-hot-toast'
 
@@ -152,41 +148,6 @@ const ActionButtons = ({ markdown, title }: { markdown: string, title: string })
     </div>
   );
 };
-
-const markdownComponents = {
-  table: (props: React.HTMLProps<HTMLTableElement>) => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" {...props} />
-    </div>
-  ),
-  thead: (props: React.HTMLProps<HTMLTableSectionElement>) => (
-    <thead className="bg-gray-50 dark:bg-gray-800" {...props} />
-  ),
-  th: (props: React.HTMLProps<HTMLTableCellElement>) => (
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" {...props} />
-  ),
-  td: (props: React.HTMLProps<HTMLTableCellElement>) => (
-    <td className="px-6 py-4 whitespace-nowrap text-sm" {...props} />
-  ),
-  code: ({ className, children, ...props }: React.HTMLProps<HTMLElement>) => {
-    const match = /language-(\w+)/.exec(className || '')
-    return match ? (
-      <SyntaxHighlighter
-        // @ts-ignore - vscDarkPlus type is not properly exported but works fine
-        style={vscDarkPlus}
-        language={match[1]}
-        PreTag="div"
-        {...props}
-      >
-        {String(children).replace(/\n$/, '')}
-      </SyntaxHighlighter>
-    ) : (
-      <code className={className} {...props}>
-        {children}
-      </code>
-    )
-  }
-}
 
 // --- Reducer Logic --- START
 type AppState = {
