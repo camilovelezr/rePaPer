@@ -7,7 +7,6 @@ from pydantic_ai.usage import Usage
 import logfire
 
 from repaper.models.models import LLM_MODELS
-from repaper.models.ocr import OCRResponse
 from repaper.prompts import SUMMARIZER_PROMPT
 from repaper.models.sections import Section
 

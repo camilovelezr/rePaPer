@@ -208,6 +208,11 @@ class MarkdownToPdfRequest(BaseModel):
     title: Optional[str]
 
 
+class MarkdownDownloadRequest(BaseModel):
+    markdown: str
+    title: Optional[str]
+
+
 @app.post("/api/markdown-to-pdf")
 async def markdown_to_pdf(request: MarkdownToPdfRequest):
     """Convert markdown to PDF."""
@@ -223,6 +228,25 @@ async def markdown_to_pdf(request: MarkdownToPdfRequest):
         )
     except Exception as e:
         logfire.error("PDF generation error", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/download-markdown")
+async def download_markdown(request: MarkdownDownloadRequest):
+    """Download markdown as .md file."""
+    try:
+        logfire.info("Downloading markdown", title=request.title)
+        filename = (
+            f"{request.title.replace(' ', '_')}.md" if request.title else "document.md"
+        )
+
+        return StreamingResponse(
+            io.BytesIO(request.markdown.encode("utf-8")),
+            media_type="text/markdown",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as e:
+        logfire.error("Markdown download error", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -48,15 +48,6 @@ const ChevronDownIcon = () => (
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 const ActionButtons = ({ markdown, title }: { markdown: string, title: string }) => {
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(markdown);
-      toast.success('Copied to clipboard!');
-    } catch (err) {
-      toast.error('Failed to copy to clipboard');
-    }
-  };
-
   const handleDownloadPDF = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/markdown-to-pdf`, {
@@ -91,16 +82,57 @@ const ActionButtons = ({ markdown, title }: { markdown: string, title: string })
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success('PDF downloaded successfully!');
     } catch (err) {
       toast.error('Failed to download PDF');
     }
   };
 
+  const handleDownloadMarkdown = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/download-markdown`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title,
+          markdown: markdown,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to download markdown');
+
+      // Get filename from Content-Disposition header if present
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = title.replace(/\s+/g, '_') + '.md';
+      if (contentDisposition) {
+        const matches = /filename="([^"]*)"/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = matches[1];
+        }
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Markdown downloaded successfully!');
+    } catch (err) {
+      toast.error('Failed to download markdown');
+    }
+  };
+
   return (
-    <div className="flex items-center space-x-4">
+    <div className="action-buttons-container">
       <button
         onClick={handleDownloadPDF}
-        className="flex items-center"
+        className="action-button action-button-primary"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -109,13 +141,13 @@ const ActionButtons = ({ markdown, title }: { markdown: string, title: string })
       </button>
 
       <button
-        onClick={handleCopy}
-        className="flex items-center"
+        onClick={handleDownloadMarkdown}
+        className="action-button action-button-secondary"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <span>Copy to Clipboard</span>
+        <span>Download Markdown</span>
       </button>
     </div>
   );
@@ -160,7 +192,7 @@ const markdownComponents = {
 type AppState = {
   isLoading: boolean;
   progress: ProgressState | null;
-  partialSummaries: string[];
+  accumulatedMarkdown: string;
   response: ApiResponse | null;
 };
 
@@ -175,7 +207,7 @@ type AppAction =
 const initialState: AppState = {
   isLoading: false,
   progress: null,
-  partialSummaries: [],
+  accumulatedMarkdown: '',
   response: null,
 };
 
@@ -205,10 +237,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       case 'ADD_PARTIAL_SUMMARY':
         return {
           ...state,
-          partialSummaries: [...state.partialSummaries, action.payload],
+          accumulatedMarkdown: state.accumulatedMarkdown + action.payload,
         };
       case 'SET_COMPLETE': {
-        const finalMarkdown = state.partialSummaries.join('');
+        const finalMarkdown = state.accumulatedMarkdown;
         toast.success('Summary generated successfully!', { /* ... styles ... */ });
         return {
           ...state,
@@ -250,11 +282,9 @@ function App() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<ErrorToast>({ message: '', visible: false })
-  const [previewMode, setPreviewMode] = useState(true)
-
   // --- useReducer Hook ---
   const [appState, dispatch] = useReducer(appReducer, initialState);
-  const { isLoading, progress, partialSummaries, response } = appState;
+  const { isLoading, progress, response } = appState;
 
   // State to hold the latest parsed SSE event (still needed for effect trigger)
   const [lastEventData, setLastEventData] = useState<any>(null);
@@ -310,21 +340,6 @@ function App() {
     setLastEventData(null);
   }, [lastEventData]);
   // --- Effect to handle state updates based on lastEventData --- END
-
-  // Initialize preview mode based on localStorage
-  useEffect(() => {
-    const savedPreviewMode = localStorage.getItem('previewMode')
-    if (savedPreviewMode === 'false') {
-      setPreviewMode(false)
-    }
-  }, [])
-
-  // Toggle preview mode and save to localStorage
-  const togglePreviewMode = () => {
-    const newPreviewMode = !previewMode
-    setPreviewMode(newPreviewMode)
-    localStorage.setItem('previewMode', String(newPreviewMode))
-  }
 
   // Fetch available models
   useEffect(() => {
@@ -556,119 +571,121 @@ function App() {
         </button>
       </div>
 
-      <div className="w-full max-w-5xl mx-auto px-6 py-16 pb-24">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-500 tracking-tight">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 pb-24">
+        <div className="text-center mb-20">
+          <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-500 tracking-tight mb-4">
             rePaPer
           </h1>
-          <p className="mt-3 text-base text-gray-500 dark:text-gray-400">
-            Transform your documents instantly
+          <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+            Transform your documents with AI magic
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12 pb-16 input-sections">
-          <div className="flex-1 space-y-8">
-            <div>
-              <h2 className="text-base font-medium text-gray-900 dark:text-white mb-3">
-                Choose AI Model
-              </h2>
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`
-                    w-full h-14 bg-white dark:bg-gray-900
-                    border border-gray-200 dark:border-gray-800
-                    rounded-xl
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-0">
+          {/* AI Model Selection */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">
+              AI Model
+            </h2>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className={`
+                    w-full h-16 bg-white dark:bg-gray-800/50
+                    border-2 border-gray-200 dark:border-gray-700
+                    rounded-2xl
                     flex items-center
                     text-left text-gray-900 dark:text-white
-                    focus:outline-none focus:ring-2 focus:ring-purple-500/20 
-                    focus:border-purple-500 dark:focus:border-purple-500
+                    focus:outline-none focus:ring-2 focus:ring-purple-500/30 
+                    focus:border-purple-500 dark:focus:border-purple-400
                     transition-all cursor-pointer
-                    ${isDropdownOpen ? 'ring-2 ring-purple-500/20 border-purple-500' : ''}
-                    ${models.length === 0 ? 'cursor-not-allowed opacity-75' : 'hover:border-gray-300 dark:hover:border-gray-700'}
+                    ${isDropdownOpen ? 'ring-2 ring-purple-500/30 border-purple-500' : ''}
+                    ${models.length === 0 ? 'cursor-not-allowed opacity-75' : 'hover:border-purple-300 dark:hover:border-purple-500'}
                   `}
-                  disabled={models.length === 0}
-                >
-                  <div className="flex-grow dropdown-text-padding min-w-0">
-                    <span className="block truncate text-lg">
-                      {selectedModel || (models.length === 0 ? 'Loading models...' : 'Select a model')}
-                    </span>
-                  </div>
-                  <div className="flex-shrink-0 pr-4">
-                    <span className={`pointer-events-none transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                      <ChevronDownIcon />
-                    </span>
-                  </div>
-                </button>
+                disabled={models.length === 0}
+              >
+                <div className="flex-grow dropdown-text-padding min-w-0">
+                  <span className="block truncate text-base font-medium">
+                    {selectedModel || (models.length === 0 ? 'Loading...' : 'Select model')}
+                  </span>
+                </div>
+                <div className="flex-shrink-0 pr-4">
+                  <span className={`pointer-events-none transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
+                    <ChevronDownIcon />
+                  </span>
+                </div>
+              </button>
 
-                {isDropdownOpen && models.length > 0 && (
-                  <div className="
+              {isDropdownOpen && models.length > 0 && (
+                <div className="
                     absolute z-10 w-full mt-0.5 bg-white dark:bg-gray-800/95
                     border border-gray-200 dark:border-gray-700
                     rounded-xl shadow-xl backdrop-blur-sm
                     transform opacity-100 scale-100 transition-all duration-100 ease-out
                   ">
-                    <div className="max-h-[600px] overflow-auto">
-                      {models.map((model) => (
-                        <button
-                          key={model}
-                          onClick={() => {
-                            setSelectedModel(model)
-                            setIsDropdownOpen(false)
-                          }}
-                          className={`
+                  <div className="max-h-[600px] overflow-auto">
+                    {models.map((model) => (
+                      <button
+                        key={model}
+                        onClick={() => {
+                          setSelectedModel(model)
+                          setIsDropdownOpen(false)
+                        }}
+                        className={`
                             w-full h-14
                             flex items-center
                             ${selectedModel === model
-                              ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                              : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/90'
-                            }
+                            ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                            : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/90'
+                          }
                             text-lg transition-colors cursor-pointer
                             border-b border-gray-100 dark:border-gray-700 last:border-0
                           `}
-                        >
-                          <div className="dropdown-text-padding">
-                            <span>{model}</span>
-                          </div>
-                          <div className="pr-4"></div>
-                        </button>
-                      ))}
-                    </div>
+                      >
+                        <div className="dropdown-text-padding">
+                          <span>{model}</span>
+                        </div>
+                        <div className="pr-4"></div>
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col">
-              <h2 className="text-base font-medium text-gray-900 dark:text-white mb-3">
-                Enter Instructions
-              </h2>
-              <textarea
-                value={instructions}
-                onChange={handleTextareaInput}
-                placeholder="What do you want to do with this PDF?"
-                className="flex-1 min-h-[200px] p-8 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 
-                rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:focus:border-purple-500 
-                transition-shadow resize-none text-gray-900 dark:text-white text-lg leading-relaxed overflow-hidden
-                placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                style={{ height: 'auto' }}
-              />
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col">
-            <h2 className="text-base font-medium text-gray-900 dark:text-white mb-3">
-              Upload Document
+          {/* Instructions */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">
+              Instructions
+            </h2>
+            <textarea
+              value={instructions}
+              onChange={handleTextareaInput}
+              placeholder="What do you want to do with this PDF?"
+              className="w-full min-h-[200px] p-6 bg-white dark:bg-gray-800/50 border-2 border-gray-200 dark:border-gray-700 
+              rounded-2xl focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:focus:border-purple-400 
+              transition-all resize-none text-gray-900 dark:text-white text-base leading-relaxed overflow-hidden
+              placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              style={{ height: 'auto' }}
+            />
+          </div>
+
+          {/* Document Upload */}
+          <div className="space-y-3 flex flex-col">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">
+              Document
             </h2>
             <div
               className={`
-                flex-1 relative group border-2 border-dashed rounded-2xl cursor-pointer
-                flex flex-col items-center justify-center min-h-[350px]
+                flex-grow relative group border-2 border-dashed rounded-2xl cursor-pointer
+                flex flex-col items-center justify-center min-h-[200px]
+                transition-all duration-200
                 ${isDragging
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/5 scale-[1.02]'
-                  : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
-                ${file ? 'bg-purple-50/50 dark:bg-purple-500/5' : ''}
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 scale-[1.02] shadow-lg'
+                  : 'border-gray-300 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-gray-50 dark:hover:bg-gray-800/30'}
+                ${file ? 'bg-purple-50/50 dark:bg-purple-500/5 border-purple-300 dark:border-purple-600' : 'bg-white/50 dark:bg-gray-800/20'}
               `}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -683,36 +700,40 @@ function App() {
                 accept=".pdf"
               />
 
-              <div className="flex flex-col items-center justify-center w-full px-6">
-                <div className="mb-6">
+              <div className="flex flex-col items-center justify-center w-full px-6 py-8">
+                <div className="mb-4">
                   {file ? (
                     <div className="relative">
-                      <svg className="mx-auto h-16 w-16 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full p-4">
+                        <svg className="h-12 w-12 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
                       <button
                         onClick={handleRemoveFile}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-md"
                         aria-label="Remove file"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </div>
                   ) : (
-                    <svg className="mx-auto h-16 w-16 text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
+                    <div className="bg-gray-100 dark:bg-gray-700/50 rounded-full p-4">
+                      <svg className="h-12 w-12 text-gray-400 dark:text-gray-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </div>
                   )}
                 </div>
 
-                <div className="text-center space-y-3">
-                  <p className="text-xl text-gray-900 dark:text-white font-medium">
-                    {file ? file.name : 'Drop your PDF here'}
+                <div className="text-center space-y-2">
+                  <p className="text-base text-gray-900 dark:text-white font-semibold">
+                    {file ? file.name : 'Drop PDF here'}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {file ? 'Click to change file' : 'or click to browse'}
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {file ? 'Click to change' : 'or click to browse'}
                   </p>
                 </div>
               </div>
@@ -724,103 +745,22 @@ function App() {
           </div>
         </div>
 
-        <div className="mt-24 flex flex-col items-center gap-8 mb-24">
-          {/* Mode Selector */}
-          <div className="relative w-full max-w-[280px] h-12">
-            <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-full"></div>
-
-            {/* Sliding Background */}
-            <div
-              className={`
-                absolute inset-y-1 w-[50%] rounded-full
-                transform transition-all duration-500 ease-out-expo
-                ${previewMode ? 'left-1' : 'left-[calc(50%-1px)]'}
-                bg-gradient-to-r from-purple-600 to-purple-500
-                shadow-[0_2px_8px_-1px_rgba(168,85,247,0.6)] dark:shadow-[0_0_12px_rgba(168,85,247,0.35)]
-              `}
-            />
-
-            {/* Buttons Container */}
-            <div className="relative h-full flex">
-              <button
-                onClick={() => !previewMode && togglePreviewMode()}
-                className="flex-1 group relative focus:outline-none mode-selector-btn"
-              >
-                <div className={`
-                  flex items-center justify-center gap-2 h-full
-                  transition-all duration-300 rounded-full
-                  ${previewMode
-                    ? 'text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                  }
-                `}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                  <span className={`text-sm font-medium transition-all duration-300 ${previewMode ? 'opacity-100' : 'opacity-80'}`}>
-                    Live Preview
-                  </span>
-                </div>
-
-                {/* Live Preview tooltip */}
-                <div className="mode-tooltip">
-                  <div className="mode-tooltip-content">
-                    Watch the transformation happen live
-                    <div className="mode-tooltip-arrow"></div>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => previewMode && togglePreviewMode()}
-                className="flex-1 group relative focus:outline-none mode-selector-btn"
-              >
-                <div className={`
-                  flex items-center justify-center gap-2 h-full
-                  transition-all duration-300 rounded-full
-                  ${!previewMode
-                    ? 'text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                  }
-                `}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                  <span className={`text-sm font-medium transition-all duration-300 ${!previewMode ? 'opacity-100' : 'opacity-80'}`}>
-                    Quick PDF
-                  </span>
-                </div>
-
-                {/* Quick PDF tooltip */}
-                <div className="mode-tooltip">
-                  <div className="mode-tooltip-content">
-                    Skip preview, get PDF instantly
-                    <div className="mode-tooltip-arrow"></div>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Main Action Button */}
+        <div className="flex justify-center mt-32 mb-16">
           <button
             onClick={handleButtonClick}
             disabled={!file || !selectedModel || isLoading}
             className={`
-              w-full px-6 h-16 rounded-xl text-white font-medium text-xl
-              transition-all duration-200
+              w-full h-12 rounded-2xl text-white font-bold text-2xl tracking-wide whitespace-nowrap
+              transition-all duration-300 shadow-[0_20px_50px_-15px_rgba(139,92,246,0.55)]
               ${isLoading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 focus:ring-4 focus:ring-purple-500/20 active:scale-[0.98] cursor-pointer'}
+                ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-[0_25px_60px_-15px_rgba(139,92,246,0.7)] hover:scale-[1.02] focus:ring-4 focus:ring-purple-500/40 active:scale-[0.99] cursor-pointer'}
+              disabled:hover:shadow-none
             `}
           >
             {isLoading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white opacity-75" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <span className="flex items-center justify-center gap-3 whitespace-nowrap">
+                <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -867,36 +807,23 @@ function App() {
           </div>
         )}
 
-        {/* Partial summaries */}
-        {partialSummaries.length > 0 && !response && (
-          <div className="mt-16 prose prose-purple dark:prose-invert max-w-none">
-            <h2 className="text-3xl font-semibold text-gray-900 dark:text-white mb-8">
-              {progress?.title || 'Processing Sections...'}
-            </h2>
-            {partialSummaries.map((summary, index) => (
-              <div key={index} className="mb-8 animate-fade-in bg-white dark:bg-gray-800/50 rounded-xl p-8 border border-gray-100 dark:border-gray-800">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={markdownComponents}
-                >
-                  {summary}
-                </ReactMarkdown>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Final response */}
+        {/* Final response - only show download buttons */}
         {response && (
-          <div className="mt-16 prose prose-purple dark:prose-invert max-w-none">
-            <h1 className="text-3xl font-semibold text-gray-900 dark:text-white mb-8">{response.title}</h1>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={markdownComponents}
-            >
-              {response.markdown}
-            </ReactMarkdown>
-            <ActionButtons markdown={response.markdown} title={response.title} />
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800/50 rounded-2xl border-2 border-green-200 dark:border-green-800 p-8 mb-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="bg-green-100 dark:bg-green-900/30 rounded-full p-3">
+                  <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{response.title}</h2>
+                  <p className="text-gray-600 dark:text-gray-400 mt-1">Your document has been processed successfully!</p>
+                </div>
+              </div>
+              <ActionButtons markdown={response.markdown} title={response.title} />
+            </div>
           </div>
         )}
       </div>

@@ -399,90 +399,85 @@ button[role="switch"]:focus-visible {
 }
 
 /* Action buttons styling revamp */
-.flex.items-center.space-x-4 button {
-  padding: 0.75rem 1.25rem !important;
-  border-radius: 12px !important;
-  font-size: 0.925rem !important;
-  font-weight: 500 !important;
-  line-height: 1.25rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 0.625rem !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  border: 1px solid rgba(229, 231, 235, 0.5) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-/* Container spacing */
-.flex.items-center.space-x-4 {
-  display: flex !important;
+.action-buttons-container {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
   gap: 1rem !important;
-  padding: 1.5rem 0 !important;
+  padding: 2rem 0 !important;
   margin-top: 2rem !important;
   width: 100% !important;
 }
 
-/* Copy button specific styles */
-.flex.items-center.space-x-4 button:last-child {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: #4B5563 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
-  flex: 0 0 auto !important;
-  /* Don't grow, stay compact */
-  min-width: 180px !important;
+.action-button {
+  padding: 1rem 1.5rem !important;
+  border-radius: 16px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.75rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
 }
 
-/* Download button specific styles */
-.flex.items-center.space-x-4 button:first-child {
+/* Primary button (Download PDF) */
+.action-button-primary {
   background: linear-gradient(135deg, #8B5CF6, #6366F1) !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
-  flex: 1 !important;
-  /* Take up remaining space */
-  justify-content: center !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25) !important;
+}
+
+.action-button-primary:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.35) !important;
+  filter: brightness(1.1) !important;
+}
+
+/* Secondary button (Download Markdown) */
+.action-button-secondary {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #6B7280 !important;
+  border-color: rgba(229, 231, 235, 0.8) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+.action-button-secondary:hover {
+  transform: translateY(-3px) !important;
+  background: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  color: #374151 !important;
 }
 
 /* Dark mode styles */
-.dark .flex.items-center.space-x-4 button:last-child {
-  background: rgba(31, 41, 55, 0.75) !important;
-  color: #E5E7EB !important;
-  border-color: rgba(75, 85, 99, 0.3) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-}
-
-.dark .flex.items-center.space-x-4 button:first-child {
+.dark .action-button-primary {
   background: linear-gradient(135deg, #7C3AED, #4F46E5) !important;
-  border-color: rgba(139, 92, 246, 0.3) !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35) !important;
 }
 
-/* Hover states */
-.flex.items-center.space-x-4 button:last-child:hover {
-  transform: translateY(-2px) !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+.dark .action-button-primary:hover {
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.45) !important;
 }
 
-.flex.items-center.space-x-4 button:first-child:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
-  filter: brightness(1.05) !important;
+.dark .action-button-secondary {
+  background: rgba(31, 41, 55, 0.85) !important;
+  color: #E5E7EB !important;
+  border-color: rgba(75, 85, 99, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-.dark .flex.items-center.space-x-4 button:last-child:hover {
-  background: rgba(31, 41, 55, 0.9) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-}
-
-.dark .flex.items-center.space-x-4 button:first-child:hover {
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+.dark .action-button-secondary:hover {
+  background: rgba(31, 41, 55, 0.95) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+  color: #F3F4F6 !important;
 }
 
 /* Icon styling */
-.flex.items-center.space-x-4 button svg {
-  width: 18px !important;
-  height: 18px !important;
+.action-button svg {
+  width: 20px !important;
+  height: 20px !important;
   stroke-width: 2 !important;
 }
 
@@ -707,6 +702,11 @@ button[aria-label="Toggle dark mode"] {
 
 .dark .section-count {
   color: #E5E7EB !important;
+}
+
+/* Main action button spacing - force proper distance from dropzone */
+div.flex.justify-center.mt-32.mb-16 {
+  margin-top: 2.5rem !important;
 }
 
 /* Dropdown scrollbar styles */
